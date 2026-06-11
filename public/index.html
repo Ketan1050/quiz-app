@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CI/CD Quiz</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --card: #212535;
+      --border: #2e3347;
+      --accent: #4f7dff;
+      --accent-dim: #1e2f66;
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #eab308;
+      --text: #e8eaf6;
+      --muted: #8b93b0;
+      --radius: 10px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .container { width: 100%; max-width: 700px; }
+
+    /* Header */
+    .header { text-align: center; margin-bottom: 2rem; }
+    .header h1 { font-size: 1.9rem; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+    .header p { color: var(--muted); margin-top: 0.4rem; font-size: 0.95rem; }
+    .badge {
+      display: inline-block; background: var(--accent-dim); color: var(--accent);
+      padding: 3px 12px; border-radius: 20px; font-size: 0.78rem;
+      font-weight: 600; letter-spacing: 0.3px; margin-bottom: 0.8rem;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.2rem;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 0.65rem 1.4rem; border-radius: var(--radius);
+      font-size: 0.95rem; font-weight: 600; cursor: pointer;
+      border: none; transition: all 0.15s;
+    }
+    .btn-primary { background: var(--accent); color: #fff; width: 100%; margin-top: 1rem; padding: 0.8rem; }
+    .btn-primary:hover { background: #3d6ce0; transform: translateY(-1px); }
+    .btn-outline {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text); padding: 0.5rem 1.2rem; font-size: 0.88rem;
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Start screen */
+    .start-screen h2 { font-size: 1.2rem; margin-bottom: 0.5rem; }
+    .start-screen p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
+    .count-selector {
+      display: flex; gap: 8px; margin-top: 1rem; flex-wrap: wrap;
+    }
+    .count-btn {
+      padding: 6px 16px; border-radius: 8px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); cursor: pointer; font-size: 0.88rem;
+      transition: all 0.15s;
+    }
+    .count-btn.active, .count-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+    /* Progress */
+    .progress-bar {
+      height: 4px; background: var(--border); border-radius: 4px; margin-bottom: 1.5rem; overflow: hidden;
+    }
+    .progress-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.3s; }
+
+    .quiz-meta {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1rem; font-size: 0.85rem; color: var(--muted);
+    }
+    .category-tag {
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; color: var(--accent);
+    }
+
+    /* Question */
+    .question-text { font-size: 1.1rem; font-weight: 600; line-height: 1.5; margin-bottom: 1.2rem; }
+
+    /* Options */
+    .options { display: flex; flex-direction: column; gap: 10px; }
+    .option {
+      display: flex; align-items: center; gap: 12px;
+      padding: 0.85rem 1rem; border-radius: var(--radius);
+      border: 1px solid var(--border); cursor: pointer;
+      background: var(--surface); transition: all 0.15s; font-size: 0.95rem;
+    }
+    .option:hover { border-color: var(--accent); background: var(--accent-dim); }
+    .option.selected { border-color: var(--accent); background: var(--accent-dim); }
+    .option-letter {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--border); display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 700; flex-shrink: 0; color: var(--muted);
+    }
+    .option.selected .option-letter { background: var(--accent); color: #fff; }
+    .option.correct { border-color: var(--green); background: rgba(34,197,94,0.1); }
+    .option.correct .option-letter { background: var(--green); color: #fff; }
+    .option.wrong { border-color: var(--red); background: rgba(239,68,68,0.1); }
+    .option.wrong .option-letter { background: var(--red); color: #fff; }
+
+    /* Navigation */
+    .nav-btns {
+      display: flex; gap: 10px; margin-top: 1.2rem;
+      justify-content: space-between; align-items: center;
+    }
+
+    /* Results */
+    .score-circle {
+      width: 110px; height: 110px; border-radius: 50%;
+      border: 5px solid var(--accent); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; margin: 0 auto 1.5rem;
+    }
+    .score-circle .score-num { font-size: 2rem; font-weight: 800; }
+    .score-circle .score-label { font-size: 0.75rem; color: var(--muted); }
+    .grade-badge {
+      text-align: center; font-size: 2.5rem; font-weight: 800; margin-bottom: 0.3rem;
+    }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 1rem 0; }
+    .stat { text-align: center; background: var(--surface); border-radius: 8px; padding: 0.8rem 0.5rem; }
+    .stat-val { font-size: 1.3rem; font-weight: 700; }
+    .stat-lbl { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+    /* Review */
+    .review-item { margin-bottom: 1rem; }
+    .review-q { font-weight: 600; margin-bottom: 0.4rem; font-size: 0.95rem; }
+    .review-answer { font-size: 0.88rem; padding: 6px 12px; border-radius: 8px; margin: 3px 0; }
+    .review-answer.correct-ans { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+    .review-answer.wrong-ans { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+    .explanation { font-size: 0.83rem; color: var(--muted); margin-top: 6px; padding: 8px 10px; background: var(--surface); border-radius: 8px; line-height: 1.5; }
+
+    /* Timer */
+    .timer { font-variant-numeric: tabular-nums; }
+    .timer.urgent { color: var(--red); }
+
+    /* Loading */
+    .loading { text-align: center; padding: 3rem; color: var(--muted); }
+    .spinner {
+      display: inline-block; width: 32px; height: 32px;
+      border: 3px solid var(--border); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+      background: var(--card); border: 1px solid var(--border);
+      padding: 0.6rem 1.2rem; border-radius: 20px; font-size: 0.88rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4); z-index: 100;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .toast.show { opacity: 1; }
+
+    /* Passed/failed */
+    .passed { color: var(--green); }
+    .failed { color: var(--red); }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="badge">Node.js + CI/CD</div>
+    <h1>🚀 CI/CD Quiz</h1>
+    <p>Test your knowledge of pipelines, Docker, and DevOps</p>
+  </div>
+
+  <div id="app"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api/quiz';
+let state = {
+  screen: 'start',   // start | quiz | results
+  sessionId: null,
+  questions: [],
+  current: 0,
+  answers: {},
+  results: null,
+  count: 10,
+  timerInterval: null,
+  elapsed: 0
+};
+
+const LETTERS = ['A', 'B', 'C', 'D'];
+
+function render() {
+  const app = document.getElementById('app');
+  if (state.screen === 'start') app.innerHTML = renderStart();
+  else if (state.screen === 'quiz') app.innerHTML = renderQuiz();
+  else if (state.screen === 'results') app.innerHTML = renderResults();
+  bindEvents();
+}
+
+function renderStart() {
+  const counts = [5, 10, 15];
+  return `
+  <div class="card start-screen">
+    <h2>How many questions?</h2>
+    <p>Each question covers a CI/CD topic: pipelines, GitHub Actions, Docker, deployment strategies, Git, and security.</p>
+    <div class="count-selector">
+      ${counts.map(n => `<button class="count-btn ${state.count === n ? 'active' : ''}" data-count="${n}">${n} questions</button>`).join('')}
+    </div>
+    <button class="btn btn-primary" id="start-btn">Start Quiz →</button>
+  </div>`;
+}
+
+function renderQuiz() {
+  const q = state.questions[state.current];
+  const total = state.questions.length;
+  const pct = ((state.current) / total) * 100;
+  const answered = Object.keys(state.answers).length;
+  const mins = String(Math.floor(state.elapsed / 60)).padStart(2, '0');
+  const secs = String(state.elapsed % 60).padStart(2, '0');
+  const timerClass = state.elapsed > 600 ? 'timer urgent' : 'timer';
+
+  return `
+  <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+  <div class="quiz-meta">
+    <span class="${timerClass}">⏱ ${mins}:${secs}</span>
+    <span class="category-tag">${q.category}</span>
+    <span>${state.current + 1} / ${total}</span>
+  </div>
+  <div class="card">
+    <div class="question-text">${q.question}</div>
+    <div class="options">
+      ${q.options.map((opt, i) => `
+        <div class="option ${state.answers[q.id] === i ? 'selected' : ''}" data-opt="${i}">
+          <div class="option-letter">${LETTERS[i]}</div>
+          <span>${opt}</span>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+  <div class="nav-btns">
+    <button class="btn btn-outline" id="prev-btn" ${state.current === 0 ? 'disabled' : ''}>← Back</button>
+    <span style="font-size:0.82rem;color:var(--muted)">${answered}/${total} answered</span>
+    ${state.current < total - 1
+      ? `<button class="btn btn-outline" id="next-btn">Next →</button>`
+      : `<button class="btn btn-primary" id="submit-btn" style="width:auto">Submit Quiz ✓</button>`
+    }
+  </div>`;
+}
+
+function renderResults() {
+  const r = state.results;
+  const gradeColor = r.passed ? 'var(--green)' : 'var(--red)';
+  const mins = String(Math.floor(r.timeTaken / 60)).padStart(2,'0');
+  const secs = String(r.timeTaken % 60).padStart(2,'0');
+
+  return `
+  <div class="card" style="text-align:center">
+    <div class="grade-badge" style="color:${gradeColor}">Grade ${r.grade}</div>
+    <div class="score-circle" style="border-color:${gradeColor}">
+      <div class="score-num">${r.percentage}%</div>
+      <div class="score-label">Score</div>
+    </div>
+    <p style="font-size:1.1rem;font-weight:600" class="${r.passed ? 'passed' : 'failed'}">
+      ${r.passed ? '🎉 Passed!' : '❌ Not passed'}
+    </p>
+    <div class="stats-grid">
+      <div class="stat"><div class="stat-val" style="color:var(--green)">${r.score}</div><div class="stat-lbl">Correct</div></div>
+      <div class="stat"><div class="stat-val" style="color:var(--red)">${r.total - r.score}</div><div class="stat-lbl">Wrong</div></div>
+      <div class="stat"><div class="stat-val">${mins}:${secs}</div><div class="stat-lbl">Time</div></div>
+    </div>
+    <button class="btn btn-primary" id="restart-btn">Try Again →</button>
+  </div>
+
+  <div style="margin-top:1.5rem">
+    <h3 style="margin-bottom:1rem;font-size:1rem;color:var(--muted)">Review Answers</h3>
+    ${r.results.map((item, idx) => `
+      <div class="card review-item">
+        <div class="quiz-meta" style="margin-bottom:0.5rem">
+          <span class="category-tag">${item.category}</span>
+          <span>${item.correct ? '✅' : '❌'}</span>
+        </div>
+        <div class="review-q">${idx + 1}. ${item.question}</div>
+        ${item.userAnswer !== null
+          ? `<div class="review-answer ${item.correct ? 'correct-ans' : 'wrong-ans'}">
+              Your answer: ${LETTERS[item.userAnswer]}. ${item.options[item.userAnswer]}
+             </div>`
+          : `<div class="review-answer wrong-ans">Not answered</div>`
+        }
+        ${!item.correct
+          ? `<div class="review-answer correct-ans">Correct: ${LETTERS[item.correctAnswer]}. ${item.options[item.correctAnswer]}</div>`
+          : ''
+        }
+        <div class="explanation">💡 ${item.explanation}</div>
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+function bindEvents() {
+  document.querySelectorAll('.count-btn').forEach(btn => {
+    btn.onclick = () => { state.count = parseInt(btn.dataset.count); render(); };
+  });
+
+  const startBtn = document.getElementById('start-btn');
+  if (startBtn) startBtn.onclick = startQuiz;
+
+  document.querySelectorAll('.option').forEach(opt => {
+    opt.onclick = () => {
+      const q = state.questions[state.current];
+      state.answers[q.id] = parseInt(opt.dataset.opt);
+      render();
+    };
+  });
+
+  const prevBtn = document.getElementById('prev-btn');
+  if (prevBtn) prevBtn.onclick = () => { state.current--; render(); };
+
+  const nextBtn = document.getElementById('next-btn');
+  if (nextBtn) nextBtn.onclick = () => { state.current++; render(); };
+
+  const submitBtn = document.getElementById('submit-btn');
+  if (submitBtn) submitBtn.onclick = submitQuiz;
+
+  const restartBtn = document.getElementById('restart-btn');
+  if (restartBtn) restartBtn.onclick = () => {
+    clearInterval(state.timerInterval);
+    state = { screen: 'start', sessionId: null, questions: [], current: 0,
+               answers: {}, results: null, count: 10, timerInterval: null, elapsed: 0 };
+    render();
+  };
+}
+
+async function startQuiz() {
+  try {
+    document.getElementById('app').innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading questions…</p></div>';
+    const res = await fetch(`${API}/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ count: state.count })
+    });
+    const data = await res.json();
+    state.sessionId = data.sessionId;
+    state.questions = data.questions;
+    state.screen = 'quiz';
+    state.elapsed = 0;
+    state.timerInterval = setInterval(() => {
+      state.elapsed++;
+      const el = document.querySelector('.timer');
+      if (el) {
+        const m = String(Math.floor(state.elapsed / 60)).padStart(2,'0');
+        const s = String(state.elapsed % 60).padStart(2,'0');
+        el.textContent = `⏱ ${m}:${s}`;
+        el.className = state.elapsed > 600 ? 'timer urgent' : 'timer';
+      }
+    }, 1000);
+    render();
+  } catch (e) {
+    showToast('Failed to start quiz. Is the server running?');
+    render();
+  }
+}
+
+async function submitQuiz() {
+  const unanswered = state.questions.length - Object.keys(state.answers).length;
+  if (unanswered > 0) {
+    showToast(`${unanswered} question${unanswered > 1 ? 's' : ''} unanswered — submit anyway?`);
+    await new Promise(r => setTimeout(r, 1500));
+  }
+  try {
+    clearInterval(state.timerInterval);
+    document.getElementById('app').innerHTML = '<div class="loading"><div class="spinner"></div><p>Submitting…</p></div>';
+    const res = await fetch(`${API}/submit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: state.sessionId, answers: state.answers })
+    });
+    const data = await res.json();
+    state.results = data;
+    state.screen = 'results';
+    render();
+  } catch (e) {
+    showToast('Submission failed. Please try again.');
+  }
+}
+
+function showToast(msg, duration = 3000) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), duration);
+}
+
+render();
+</script>
+</body>
+</html>
